@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  
+  <title>KMP algorithm | BLOG</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="國立交通大學開放式課程 Knuth-Morris-Pratt(KMP) 是字串查找的演算法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="KMP algorithm">
+<meta property="og:url" content="https://ablacktaco.github.io/2020/04/14/array-KMP/index.html">
+<meta property="og:site_name" content="BLOG">
+<meta property="og:description" content="國立交通大學開放式課程 Knuth-Morris-Pratt(KMP) 是字串查找的演算法。">
+<meta property="og:locale" content="zh_TW">
+<meta property="og:image" content="https://i.imgur.com/YLvqXO2.png">
+<meta property="og:image" content="https://i.imgur.com/DWOxF8o.png">
+<meta property="og:image" content="https://i.imgur.com/hnk4Jlp.png">
+<meta property="og:image" content="https://i.imgur.com/t6jGirs.png">
+<meta property="og:image" content="https://i.imgur.com/C1T14MN.png">
+<meta property="og:image" content="https://i.imgur.com/mBvT2KO.png">
+<meta property="article:published_time" content="2020-04-13T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-02-15T09:12:46.276Z">
+<meta property="article:author" content="Ann">
+<meta property="article:tag" content="Data Structure">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.imgur.com/YLvqXO2.png">
+  
+    <link rel="alternate" href="/atom.xml" title="BLOG" type="application/atom+xml">
+  
+  
+    <link rel="shortcut icon" href="/favicon.png">
+  
+  
+    
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/typeface-source-code-pro@0.0.71/index.min.css">
+
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+    
+<link rel="stylesheet" href="/fancybox/jquery.fancybox.min.css">
+
+  
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+<body>
+  <div id="container">
+    <div id="wrap">
+      <header id="header">
+  <div id="banner"></div>
+  <div id="header-outer" class="outer">
+    <div id="header-title" class="inner">
+      <h1 id="logo-wrap">
+        <a href="/" id="logo">BLOG</a>
+      </h1>
+      
+    </div>
+    <div id="header-inner" class="inner">
+      <nav id="main-nav">
+        <a id="main-nav-toggle" class="nav-icon"></a>
+        
+          <a class="main-nav-link" href="/">Home</a>
+        
+          <a class="main-nav-link" href="/archives">Archives</a>
+        
+      </nav>
+      <nav id="sub-nav">
+        
+          <a id="nav-rss-link" class="nav-icon" href="/atom.xml" title="RSS Feed"></a>
+        
+        <a id="nav-search-btn" class="nav-icon" title="搜尋"></a>
+      </nav>
+      <div id="search-form-wrap">
+        <form action="//google.com/search" method="get" accept-charset="UTF-8" class="search-form"><input type="search" name="q" class="search-form-input" placeholder="搜尋"><button type="submit" class="search-form-submit">&#xF002;</button><input type="hidden" name="sitesearch" value="https://ablacktaco.github.io"></form>
+      </div>
+    </div>
+  </div>
+</header>
+
+      <div class="outer">
+        <section id="main"><article id="post-array-KMP" class="h-entry article article-type-post" itemprop="blogPost" itemscope itemtype="https://schema.org/BlogPosting">
+  <div class="article-meta">
+    <a href="/2020/04/14/array-KMP/" class="article-date">
+  <time class="dt-published" datetime="2020-04-13T16:00:00.000Z" itemprop="datePublished">2020-04-14</time>
+</a>
+    
+  </div>
+  <div class="article-inner">
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="p-name article-title" itemprop="headline name">
+      KMP algorithm
+    </h1>
+  
+
+      </header>
+    
+    <div class="e-content article-entry" itemprop="articleBody">
+      
+        <p><a target="_blank" rel="noopener" href="http://ocw.nctu.edu.tw/course_detail-v.php?bgid=9&gid=0&nid=412&v5=cgaPEsMJkSc">國立交通大學開放式課程</a></p>
+<p>Knuth-Morris-Pratt(KMP) 是字串查找的演算法。</p>
+<a id="more"></a>
+
+<p>一般查找字串比較直覺的做法是：將字串的第一個字(T1)與文章內容(Pn)一個一個做比對，比對失敗就 shift 一格(比對 T1/Pn+1)；成功則繼續比較(T2/Pn+1)，直到想查找的字串都被比對成功為止。</p>
+<p>但這個方法存在明顯時間上的浪費：例如我們要找 pikachu，但比對到 piano 的時候在 T3(k)/P3(a) 才發生錯誤。<br>這時我們要重新比較 T1/P2 有沒有相同 — 看也知道沒有，因為從剛剛的比對已經知道 T1(p)=P1(p)、T2(i)=P2(i)，但 T1 又不等於 T2，同理也不可能等於 P2。</p>
+<p>如果可以的話，我們不希望再浪費時間比對已經知道不可能成功的字元。但說是這樣說，要如何告訴電腦這件事情？</p>
+<hr>
+<p>KMP 就是以這個思維做出發點的字串查找演算法，他利用想查找字串的 failure function，來告訴電腦如果比對失敗的話，可以一次跳過幾個字元來節省比對的時間。</p>
+<h3 id="Failure-Function"><a href="#Failure-Function" class="headerlink" title="Failure Function"></a>Failure Function</h3><p>failure function 是字串的潛在匹配個數。也就是說如果發生比對失敗，當下比對字元前的字元組與字首的相似程度。</p>
+<p><img src="https://i.imgur.com/YLvqXO2.png"></p>
+<p>如上圖所示，字串在 T(v)/P(x) 時發生比對失敗，但 x 前的字元組 z 與字首的字元組 z 相同，所以字首就可以直接 shift 到已知比對成功的字元組，節省重複比對的時間。<br>而 failure array 則紀錄了每個字元的重複字元組 z 的長度。</p>
+<p>舉例來說，字串 ababaca。<br>T1 因為是字首，shift 到自己只會進入無限 loop，所以 failure function 為 0；T2 與字首的相同字元數為 0，failure function 也是 0。</p>
+<p><img src="https://i.imgur.com/DWOxF8o.png"></p>
+<p>T23(ba) 與字首的相同字元組只有 T3/T1，failure function 為 1。</p>
+<p><img src="https://i.imgur.com/hnk4Jlp.png"></p>
+<p>T234(bab) 與字首的相同字元組有 T34/T12，failure function 為 2。</p>
+<p><img src="https://i.imgur.com/t6jGirs.png"></p>
+<p>依此類推可以得到 failure array 如下：</p>
+<p><img src="https://i.imgur.com/C1T14MN.png"></p>
+<p>如此一來要是在 T5 比對失敗，因為 T34 已經確定比對成功，加上 T12=T34，T12 就可以直接 shift 2 格到 T34 的位置，並省去比對 T12 的功夫。</p>
+<p>觀念是清楚了，但總不可能每次都用工人智慧推導，該如何用程式讓計算機自己找到 failure array 呢？</p>
+<p>我們可以從上面的範例找出規律：<br>index=0 時，failure function=0；<br>index=1 時，比對 T1/T0；<br>index=2 時，比對 T12/T01，如果失敗則比對 T2/T0；<br>index=3 時，比對 T123/T012，失敗則比對 T23/T01，再失敗則比對 T3/T0，以此規律遞減。</p>
+<p>每個字元的最高比對次數，都剛好與該字元的 index(i) 相同，且比對的字元組剛好為後 i 個字元/前 i 的字元、後 i-1 個字元/前 i-1 的字元、後 i-2 個字元/前 i-2 的字元…</p>
+<p>所以我們可以寫一個與字串及 index 相依的巢狀 for 迴圈來找出字串的 failure array(以下糙 code 使用 swift 撰寫):</p>
+<figure class="highlight swift"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">KMP</span>(<span class="params">s</span>: <span class="type">String</span>)</span> -&gt; [<span class="type">Int</span>] &#123;</span><br><span class="line">    <span class="keyword">var</span> result <span class="operator">=</span> [<span class="type">Int</span>]()</span><br><span class="line">    <span class="keyword">var</span> index <span class="operator">=</span> <span class="number">0</span></span><br><span class="line">    <span class="keyword">for</span> <span class="keyword">_</span> <span class="keyword">in</span> s &#123;</span><br><span class="line">        <span class="keyword">if</span> index <span class="operator">==</span> <span class="number">0</span> &#123;</span><br><span class="line">        result.append(<span class="number">0</span>)</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">for</span> i <span class="keyword">in</span> <span class="number">0</span><span class="operator">...</span>index &#123;</span><br><span class="line">                <span class="keyword">let</span> num <span class="operator">=</span> index <span class="operator">-</span> i</span><br><span class="line">                <span class="keyword">if</span> s.prefix(num) <span class="operator">==</span> s.prefix(index<span class="operator">+</span><span class="number">1</span>).suffix(num) &#123;</span><br><span class="line">                    result.append(num)</span><br><span class="line">                    <span class="keyword">break</span></span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        index <span class="operator">+=</span> <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>執行結果：</p>
+<p><img src="https://i.imgur.com/mBvT2KO.png"></p>
+<p>這樣在做字串比對時如果發生錯誤，可直接 shift 比對失敗字元的前一個字元的 failure function 即可。</p>
+
+      
+    </div>
+    <footer class="article-footer">
+      <a data-url="https://ablacktaco.github.io/2020/04/14/array-KMP/" data-id="ckl6d3wyy0000fyar6twyh57p" data-title="KMP algorithm" class="article-share-link">Share</a>
+      
+      
+      
+  <ul class="article-tag-list" itemprop="keywords"><li class="article-tag-list-item"><a class="article-tag-list-link" href="/tags/Data-Structure/" rel="tag">Data Structure</a></li></ul>
+
+    </footer>
+  </div>
+  
+    
+<nav id="article-nav">
+  
+  
+    <a href="/2020/01/30/array-polynomial/" id="article-nav-older" class="article-nav-link-wrap">
+      <strong class="article-nav-caption">Older</strong>
+      <div class="article-nav-title">Array - Polynomial</div>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+
+</section>
+        
+          <aside id="sidebar">
+  
+    
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">標籤</h3>
+    <div class="widget">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/Data-Structure/" rel="tag">Data Structure</a></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Swift/" rel="tag">Swift</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">標籤雲</h3>
+    <div class="widget tagcloud">
+      <a href="/tags/Data-Structure/" style="font-size: 20px;">Data Structure</a> <a href="/tags/Swift/" style="font-size: 10px;">Swift</a>
+    </div>
+  </div>
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">彙整</h3>
+    <div class="widget">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/01/">一月 2020</a></li></ul>
+    </div>
+  </div>
+
+
+  
+    
+  <div class="widget-wrap">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget">
+      <ul>
+        
+          <li>
+            <a href="/2020/04/14/array-KMP/">KMP algorithm</a>
+          </li>
+        
+          <li>
+            <a href="/2020/01/30/array-polynomial/">Array - Polynomial</a>
+          </li>
+        
+          <li>
+            <a href="/2020/01/30/array-sparse-matrix/">(no title)</a>
+          </li>
+        
+          <li>
+            <a href="/2020/01/26/refresh-UITableView/">實現 UITableView 下拉更新</a>
+          </li>
+        
+      </ul>
+    </div>
+  </div>
+
+  
+</aside>
+        
+      </div>
+      <footer id="footer">
+  
+  <div class="outer">
+    <div id="footer-info" class="inner">
+      
+      &copy; 2021 Ann<br>
+      Powered by <a href="https://hexo.io/" target="_blank">Hexo</a>
+    </div>
+  </div>
+</footer>
+
+    </div>
+    <nav id="mobile-nav">
+  
+    <a href="/" class="mobile-nav-link">Home</a>
+  
+    <a href="/archives" class="mobile-nav-link">Archives</a>
+  
+</nav>
+    
+
+
+<script src="/js/jquery-3.4.1.min.js"></script>
+
+
+
+  
+<script src="/fancybox/jquery.fancybox.min.js"></script>
+
+
+
+
+<script src="/js/script.js"></script>
+
+
+
+
+
+  </div>
+</body>
+</html>
